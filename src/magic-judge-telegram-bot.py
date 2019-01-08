@@ -137,7 +137,8 @@ def text(bot, update):
     if len(text) < 30:
         oracle_command(bot, update, text.split())
     else:
-        question(bot, update, text)
+        question_command(bot, update, text)
+
 
 def comp_rules_command(bot, update, args):
     update.message.reply_text(documents.cr_search(args), parse_mode='HTML', quote = False)
