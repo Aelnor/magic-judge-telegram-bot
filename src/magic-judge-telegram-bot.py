@@ -2,11 +2,18 @@ import logging
 import json
 import oracle
 import documents
-from telegram.ext import Updater, CommandHandler, InlineQueryHandler, CallbackQueryHandler, MessageHandler, Filters
-from telegram import InlineQueryResultArticle, InputTextMessageContent, InlineKeyboardButton, InlineKeyboardMarkup
+import gc
+from telegram.ext import (Updater, CommandHandler, InlineQueryHandler,
+                          CallbackQueryHandler, MessageHandler, Filters)
+from telegram import (InlineQueryResultArticle, InputTextMessageContent,
+                      InlineKeyboardButton, InlineKeyboardMarkup)
 
-#logging.basicConfig(level=logging.DEBUG,
-#                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+#logging.basicConfig(
+#    level=logging.DEBUG,
+#    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+#gc.set_debug(gc.DEBUG_LEAK)
+
 
 def format_card(card):
     mana = ''
@@ -27,6 +34,7 @@ def format_card(card):
         text,
         footer)
 
+
 def preview_card(card):
     mana = ''
     if 'manaCost' in card:
@@ -36,6 +44,7 @@ def preview_card(card):
         mana,
         card['type'])
 
+
 def start_command(bot, update):
     commands = [
         '/o <card name or search strings> - oracle text for a card',
@@ -44,35 +53,52 @@ def start_command(bot, update):
         '/ipg <section> (coming soon)',
         '/mtr <section> (coming soon)',
     ]
-    update.message.reply_text('How can I help?\n{}'.format('\n'.join(commands)), quote = False)
+    update.message.reply_text(
+        'How can I help?\n{}'.format(
+            '\n'.join(commands)),
+        quote=False)
+
 
 def oracle_command(bot, update, args):
     if not args:
-        update.message.reply_text('I need some clues to search for, my master!', quote=False)
+        update.message.reply_text(
+            'I need some clues to search for, my master!',
+            quote=False)
         return
     words = [word.casefold() for word in args]
 
     nameCandidates = oracle.get_matching_names(words)
 
     if not nameCandidates:
-        update.message.reply_text('I searched very thoroughly, but returned empty-handed, my master!', quote=False)
+        update.message.reply_text(
+            'I searched very thoroughly, but returned empty-handed, my master!',
+            quote=False)
         return
 
     if len(nameCandidates) > 20:
-        update.message.reply_text('I need more specific clues, my master! This would return {} names'.format(len(nameCandidates)), quote=False)
+        update.message.reply_text(
+            'I need more specific clues, my master! This would return {} names'.format(
+                len(nameCandidates)), quote=False)
         return
 
     if len(nameCandidates) > 1:
-        # TODO: if len(name) < 64 is a quickfix for /o show, which fails to send correct callback data for un... card
-        reply_markup = InlineKeyboardMarkup([[InlineKeyboardButton(name, callback_data=name)] for name in nameCandidates if len(name) < 64])
-        update.message.reply_text('Which one?', reply_markup=reply_markup, quote=False)
+        # TODO: if len(name) < 64 is a quickfix for /o show, which fails to
+        # send correct callback data for un... card
+        reply_markup = InlineKeyboardMarkup(
+            [[InlineKeyboardButton(name, callback_data=name)]
+             for name in nameCandidates if len(name) < 64])
+        update.message.reply_text(
+            'Which one?',
+            reply_markup=reply_markup,
+            quote=False)
         return
 
     reply = []
     for name in nameCandidates:
         for oracleName in oracle.get_oracle_names(name):
             reply.append(format_card(oracle.get_card(oracleName)))
-    update.message.reply_text('\n'.join(reply), parse_mode='HTML', quote = False)
+    update.message.reply_text('\n'.join(reply), parse_mode='HTML', quote=False)
+
 
 def question_command(bot, update, args):
     text = ' '.join(args).casefold()
@@ -81,9 +107,15 @@ def question_command(bot, update, args):
 
     reply = []
     for name in names:
-        reply.append('"' + name + '":\n' + '\n'.join([format_card(oracle.get_card(oracleName)) for oracleName in oracle.get_oracle_names(name)]))
+        reply.append(
+            '"' + name + '":\n' + '\n'.join(
+                [format_card(oracle.get_card(oracleName))
+                 for oracleName in oracle.get_oracle_names(name)]))
     if reply:
-        update.message.reply_text('\n\n'.join(reply), parse_mode='HTML', quote = False)
+        update.message.reply_text(
+            '\n\n'.join(reply),
+            parse_mode='HTML', quote=False)
+
 
 def inline_oracle(bot, update):
     query = update.inline_query.query.casefold()
@@ -107,10 +139,11 @@ def inline_oracle(bot, update):
                     id=card['name'],
                     title=word,
                     description=preview_card(card),
-                    input_message_content=InputTextMessageContent(format_card(card), parse_mode='HTML')
-                )
-            )
+                    input_message_content=InputTextMessageContent(
+                        format_card(card),
+                        parse_mode='HTML')))
     bot.answerInlineQuery(update.inline_query.id, results)
+
 
 def callback_name(bot, update):
     message_id = update.callback_query.message.message_id
@@ -122,13 +155,12 @@ def callback_name(bot, update):
         bot.answerCallbackQuery(update.callback_query.id)
         return
 
-    bot.editMessageText(
-        chat_id = chat_id,
-        message_id = message_id,
-        parse_mode = 'HTML',
-        text = '\n'.join([format_card(oracle.get_card(oracleName)) for oracleName in names])
-    )
+    bot.editMessageText(chat_id=chat_id, message_id=message_id,
+                        parse_mode='HTML', text='\n'.join(
+                            [format_card(oracle.get_card(oracleName))
+                             for oracleName in names]))
     bot.answerCallbackQuery(update.callback_query.id)
+
 
 def text(bot, update):
     if update.message.chat.type != 'private':
@@ -141,21 +173,34 @@ def text(bot, update):
 
 
 def comp_rules_command(bot, update, args):
-    update.message.reply_text(documents.cr_search(args), parse_mode='HTML', quote = False)
+    update.message.reply_text(
+        documents.cr_search(args),
+        parse_mode='HTML', quote=False)
+
 
 def ask_command(bot, update, args):
     pass
+
 
 def dispatcher_setup(dispatcher):
     dispatcher.add_handler(CommandHandler('start', start_command))
     dispatcher.add_handler(CommandHandler('help', start_command))
     dispatcher.add_handler(CommandHandler('o', oracle_command, pass_args=True))
-    dispatcher.add_handler(CommandHandler('q', question_command, pass_args=True))
-    dispatcher.add_handler(CommandHandler('cr', comp_rules_command, pass_args=True))
+    dispatcher.add_handler(
+        CommandHandler(
+            'q',
+            question_command,
+            pass_args=True))
+    dispatcher.add_handler(
+        CommandHandler(
+            'cr',
+            comp_rules_command,
+            pass_args=True))
     dispatcher.add_handler(CommandHandler('ask', ask_command, pass_args=True))
     dispatcher.add_handler(InlineQueryHandler(inline_oracle))
     dispatcher.add_handler(CallbackQueryHandler(callback_name))
     dispatcher.add_handler(MessageHandler(Filters.text, text))
+
 
 with open('config.json') as file:
     config = json.load(file)

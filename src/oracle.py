@@ -5,10 +5,16 @@ with open('data/names.json') as file:
 namesToSearch = names.keys()
 with open('data/oracle.json') as file:
     oracleData = json.load(file)
-print('Registered {} card names and {} oracle entries'.format(len(namesToSearch), len(oracleData)))
+print(
+    'Registered {} card names and {} oracle entries'.format(
+        len(namesToSearch),
+        len(oracleData)))
+
 
 def get_matching_names(words):
-    nameCandidates = [name for name in namesToSearch if all(word in name.casefold() for word in words)]
+    nameCandidates = [
+        name for name in namesToSearch if all(
+            word in name.casefold() for word in words)]
 
     term = ' '.join(words)
 
@@ -23,17 +29,20 @@ def get_matching_names(words):
 
     return nameCandidates
 
+
 def get_card(name):
     if name in oracleData:
         return oracleData[name]
     else:
         return None
 
+
 def get_oracle_names(name):
     if name in names:
         return names[name]
     else:
         return None
+
 
 def get_names_in_text(text):
     result = []
