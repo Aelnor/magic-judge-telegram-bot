@@ -1,6 +1,6 @@
 import logging
 import json
-import oracle
+import oracle_sql
 import documents
 import gc
 from telegram.ext import (Updater, CommandHandler, InlineQueryHandler,
@@ -67,7 +67,7 @@ def oracle_command(bot, update, args):
         return
     words = [word.casefold() for word in args]
 
-    nameCandidates = oracle.get_matching_names(words)
+    nameCandidates = oracle_sql.get_matching_names(words)
 
     if not nameCandidates:
         update.message.reply_text(
@@ -95,22 +95,22 @@ def oracle_command(bot, update, args):
 
     reply = []
     for name in nameCandidates:
-        for oracleName in oracle.get_oracle_names(name):
-            reply.append(format_card(oracle.get_card(oracleName)))
+        for oracleName in oracle_sql.get_oracle_names(name):
+            reply.append(format_card(oracle_sql.get_card(oracleName)))
     update.message.reply_text('\n'.join(reply), parse_mode='HTML', quote=False)
 
 
 def question_command(bot, update, args):
     text = ' '.join(args).casefold()
 
-    names = oracle.get_names_in_text(text)
+    names = oracle_sql.get_names_in_text(text)
 
     reply = []
     for name in names:
         reply.append(
             '"' + name + '":\n' + '\n'.join(
-                [format_card(oracle.get_card(oracleName))
-                 for oracleName in oracle.get_oracle_names(name)]))
+                [format_card(oracle_sql.get_card(oracleName))
+                 for oracleName in oracle_sql.get_oracle_names(name)]))
     if reply:
         update.message.reply_text(
             '\n\n'.join(reply),
@@ -126,14 +126,14 @@ def inline_oracle(bot, update):
         return
 
     words = query.split()
-    nameCandidates = oracle.get_matching_names(words)
+    nameCandidates = oracle_sql.get_matching_names(words)
     if not nameCandidates:
         return
 
     results = list()
     for word in nameCandidates[:3]:
-        for oracleName in oracle.get_oracle_names(word):
-            card = oracle.get_card(oracleName)
+        for oracleName in oracle_sql.get_oracle_names(word):
+            card = oracle_sql.get_card(oracleName)
             results.append(
                 InlineQueryResultArticle(
                     id=card['name'],
@@ -150,14 +150,14 @@ def callback_name(bot, update):
     chat_id = update.callback_query.message.chat.id
     name = update.callback_query.data
 
-    names = oracle.get_oracle_names(name)
+    names = oracle_sql.get_oracle_names(name)
     if not names:
         bot.answerCallbackQuery(update.callback_query.id)
         return
 
     bot.editMessageText(chat_id=chat_id, message_id=message_id,
                         parse_mode='HTML', text='\n'.join(
-                            [format_card(oracle.get_card(oracleName))
+                            [format_card(oracle_sql.get_card(oracleName))
                              for oracleName in names]))
     bot.answerCallbackQuery(update.callback_query.id)
 
