@@ -75,6 +75,9 @@ def oracle_command(bot, update, args):
             quote=False)
         return
 
+    if len(words) == 1 and words[0] in [n.casefold() for n in nameCandidates]:
+        nameCandidates = [words[0].casefold()]
+
     if len(nameCandidates) > 20:
         update.message.reply_text(
             'I need more specific clues, my master! This would return {} names'.format(
