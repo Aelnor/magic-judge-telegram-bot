@@ -17,7 +17,7 @@ def quote_identifier(s: str, errors: str = "strict") -> str:
         replacement, _ = error_handler(error)
         encodable = encodable.replace("\x00", replacement)
 
-    return encodable.replace("\"", "\"\"")
+    return encodable.replace("\"", "\"\"").replace("'", "''")
 
 
 conn = sqlite3.connect('data/mtg.sqlite', check_same_thread=False)
