@@ -10,29 +10,10 @@ from telegram import (InlineQueryResultArticle, InputTextMessageContent,
 
 from typing import List, Dict, Optional
 
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+#logging.basicConfig(
+#    level=logging.DEBUG,
+#    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-
-def format_card(card: Dict[str, str]) -> str:
-    mana = ''
-    if 'manaCost' in card:
-        mana = '\t' + card['manaCost']
-    text = ''
-    if 'text' in card:
-        text = '\n' + card['text']
-    footer = ''
-    if "Creature" in card['type']:
-        footer = '\n{}/{}'.format(card['power'], card['toughness'])
-    if "Planeswalker" in card['type'] and 'loyalty' in card:
-        footer = '\n{}'.format(card['loyalty'])
-    return '<b>{}</b>{}\n<i>{}</i>{}{}'.format(
-        card['name'],
-        mana,
-        card['type'],
-        text,
-        footer)
 
 
 def preview_card(card):
@@ -101,28 +82,11 @@ def oracle_impl(update: Update, args: Optional[List[str]]) -> None:
     if not card:
         return
 
-    update.message.reply_text(format_card(card), parse_mode='HTML', quote=False)
+    update.message.reply_text(card.format(), parse_mode='HTML', quote=False)
 
 
 def oracle_command(update: Update, context: CallbackContext):
     oracle_impl(update, context.args)
-
-
-#def question_command(update, args):
-#    text = ' '.join(args).casefold()
-#
-#    names = oracle_sql.get_names_in_text(text)
-#
-#    reply = []
-#    for name in names:
-#        reply.append(
-#            '"' + name + '":\n' + '\n'.join(
-#                [format_card(oracle_sql.get_card(oracleName))
-#                 for oracleName in oracle_sql.get_oracle_names(name)]))
-#    if reply:
-#        update.message.reply_text(
-#            '\n\n'.join(reply),
-#            parse_mode='HTML', quote=False)
 
 
 def inline_oracle(update: Update, context: CallbackContext) -> None:
@@ -146,11 +110,11 @@ def inline_oracle(update: Update, context: CallbackContext) -> None:
                 continue
             results.append(
                 InlineQueryResultArticle(
-                    id=card['name'],
+                    id=card.name,
                     title=word,
                     description=preview_card(card),
                     input_message_content=InputTextMessageContent(
-                        format_card(card),
+                        card.format(),
                         parse_mode='HTML')))
     update.callback_query.message.bot.answerInlineQuery(update.inline_query.id, results)
 
@@ -168,7 +132,7 @@ def callback_name(update: Update, context: CallbackContext) -> None:
 
     update.callback_query.message.bot.editMessageText(chat_id=chat_id, message_id=message_id,
                                                       parse_mode='HTML', text='\n'.join(
-            [format_card(oracle_sql.get_card(oracleName))
+            [oracle_sql.get_card(oracleName).format()
              for oracleName in names]))
     update.callback_query.message.bot.answerCallbackQuery(update.callback_query.id)
 
@@ -179,9 +143,6 @@ def text_filter(update: Update, context: CallbackContext) -> None:
     text = update.message.text
     if len(text) < 30:
         oracle_impl(update, text.split())
-#    else:
-#        question_command(update, text)
-
 
 def comp_rules_command(update: Update, context: CallbackContext) -> None:
     update.message.reply_text(
